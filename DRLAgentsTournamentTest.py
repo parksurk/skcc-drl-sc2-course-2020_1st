@@ -14,16 +14,20 @@ from absl import app
 
 
 from baseline.sc2.agent.DRLAgentWithVanillaDQN import TerranRLAgentWithRawActsAndRawObs
-from s09287.ProtossDQN import ProtossRLAgentWithRawActsAndRawObs
+from s10073.sc2.agent.DRLAgentWithVanillaDQN_phil import ProtossRLAgentWithRawActsAndRawObs as Agent10073
+from s09287.ProtossDQN import ProtossRLAgentWithRawActsAndRawObs as Agent09287
 
 def main(unused_argv):
    agent1 = TerranRLAgentWithRawActsAndRawObs()
-   agent2 = ProtossRLAgentWithRawActsAndRawObs()
+   agent2 = Agent09287()
+   agent3 = Agent10073()
    try:
        with sc2_env.SC2Env(
                map_name="Simple64",
-               players=[sc2_env.Agent(sc2_env.Race.terran),
-                        sc2_env.Agent(sc2_env.Race.protoss)],
+               # players=[sc2_env.Agent(sc2_env.Race.terran, "08967 박석"),
+               #          sc2_env.Agent(sc2_env.Race.protoss,"09287 서대웅")],
+               players=[sc2_env.Agent(sc2_env.Race.protoss, "09287 서대웅"),
+                        sc2_env.Agent(sc2_env.Race.protoss, "10073 오필훈")],
                agent_interface_format=features.AgentInterfaceFormat(
                    action_space=actions.ActionSpace.RAW,
                    use_raw_units=True,
@@ -33,8 +37,8 @@ def main(unused_argv):
                disable_fog=True,
                visualize=False
        ) as env:
-           run_loop.run_loop([agent1, agent2], env, max_episodes=1)
-           env.save_replay("DRLAgentsTournamentTest")
+           run_loop.run_loop([agent2, agent3], env, max_episodes=1)
+           env.save_replay("DRLAgentsTournamentTest02")
    except KeyboardInterrupt:
        pass
 
