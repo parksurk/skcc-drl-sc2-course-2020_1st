@@ -18,14 +18,14 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 import sys
-# sys.path.append('/Users/philhoonoh/Desktop/Starcraft2/dmarl-sc2')   #path to directory that contains outdir
+sys.path.append('/Users/philhoonoh/Desktop/Starcraft2/dmarl-sc2')   #path to directory that contains outdir
 
 from s10073.skdrl.pytorch.model.mlp import NaiveMultiLayerPerceptron
 from s10073.skdrl.common.memory.memory import ExperienceReplayMemory
 from s10073.skdrl.pytorch.model.dqn import DQN, prepare_training_inputs
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-#writer = SummaryWriter()
+writer = SummaryWriter()
 
 scores = []                        # list containing scores from each episode
 scores_window = deque(maxlen=100)
@@ -262,9 +262,9 @@ class ProtossRLAgentWithRawActsAndRawObs(ProtossAgentWithRawActsAndRawObs):
         self.init_sampling = 4000
         self.target_update_interval = 10
 
-        self.data_file_qnet = 's10073_rlagent_with_vanilla_dqn_qnet'
-        self.data_file_qnet_target = 's10073_rlagent_with_vanilla_dqn_qnet_target'
-        self.score_file = 's10073_rlagent_with_vanilla_dqn_score'
+        self.data_file_qnet = 'rlagent_with_vanilla_dqn_qnet'
+        self.data_file_qnet_target = 'rlagent_with_vanilla_dqn_qnet_target'
+        self.score_file = 'rlagent_with_vanilla_dqn_score'
 
         self.qnetwork = NaiveMultiLayerPerceptron(input_dim=self.s_dim,
                            output_dim=self.a_dim,
@@ -432,7 +432,7 @@ class ProtossRLAgentWithRawActsAndRawObs(ProtossAgentWithRawActsAndRawObs):
                 pickle.dump(scores, fp)
 
             #writer.add_scalar("Loss/train", self.cum_loss/obs.observation.game_loop, self.episode_count)
-            #writer.add_scalar("Score", self.cum_reward, self.episode_count)
+            writer.add_scalar("Score", self.cum_reward, self.episode_count)
 
         return getattr(self, action)(obs)
 
