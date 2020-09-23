@@ -204,11 +204,15 @@ class DQN(nn.Module):
         self.gamma = gamma
         self.opt = torch.optim.Adam(params=self.qnet.parameters(), lr=lr)
         self.register_buffer('epsilon', torch.ones(1) * epsilon)
+        self.cum_loss = 0.0
 
         # target network related
         qnet_target.load_state_dict(qnet.state_dict())
         self.qnet_target = qnet_target
         self.criteria = nn.SmoothL1Loss()
+
+        self.count_action_random = 0
+        self.count_action_select = 0
 
     def choose_action(self, state):
         qs = self.qnet(state)
@@ -216,8 +220,10 @@ class DQN(nn.Module):
         #if torch.from_numpy(prob).float() <= self.epsilon:  # random
         if random.random() <= self.epsilon: # random
             action = np.random.choice(range(self.action_dim))
+            self.count_action_random += 1
         else:  # greedy
             action = qs.argmax(dim=-1)
+            self.count_action_select += 1
         return int(action)
 
     def learn(self, state, action, reward, next_state, done):
@@ -234,6 +240,14 @@ class DQN(nn.Module):
         self.opt.zero_grad()
         loss.backward()
         self.opt.step()
+        self.loss = loss.item()
+
+    def _get_loss_(self):
+        return self.loss
+
+    def _get_action_ratio(self):
+        selected_ratio = self.count_action_select/(self.count_action_select+self.count_action_random)
+        return selected_ratio
 
 
 def prepare_training_inputs(sampled_exps, device='cpu'):

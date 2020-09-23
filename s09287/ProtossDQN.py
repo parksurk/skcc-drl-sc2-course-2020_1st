@@ -49,7 +49,9 @@ class ProtossAgentWithRawActsAndRawObs(base_agent.BaseAgent):
                "train_colossus",
                "train_mothershipcore",
                "train_mothership",
-               "attack")
+               "attack",
+               "attack_multi"
+               )
 
     def get_my_units_by_type(self, obs, unit_type):
         return [unit for unit in obs.observation.raw_units
@@ -66,6 +68,15 @@ class ProtossAgentWithRawActsAndRawObs(base_agent.BaseAgent):
                 if unit.unit_type == unit_type
                 and unit.build_progress == 100
                 and unit.alliance == features.PlayerRelative.SELF]
+
+    def select_building(self, buildings):
+        buildings = [building for building in buildings if building.is_powered]
+        production_queue = [building.order_length for building in buildings]
+        try:
+            selected = buildings[np.argmin(production_queue)]
+        except:
+            selected = []
+        return selected
 
     def get_enemy_completed_units_by_type(self, obs, unit_type):
         return [unit for unit in obs.observation.raw_units
@@ -140,12 +151,12 @@ class ProtossAgentWithRawActsAndRawObs(base_agent.BaseAgent):
         prove = self.choose_prove(obs)
         free_supply = (obs.observation.player.food_cap -
                        obs.observation.player.food_used)
-        if len(nexus)+len(pylons)>0:
+        if len(nexus)+len(pylons)>0 and free_supply < 10:
             if len(pylons) == 0:
                 pivot = random.choice(nexus)
                 pylon_pt = (pivot.x + 3, pivot.y + 3) if self.base_top_left else (pivot.x - 3, pivot.y - 3)
             else:
-                pivot = random.choice(pylons+gateway)
+                pivot = random.choice(pylons+gateway+nexus)
                 x_offset = random.randint(-4, 4)
                 y_offset = random.randint(-4, 4)
                 pylon_pt = (pivot.x + x_offset, pivot.y + y_offset)
@@ -308,26 +319,29 @@ class ProtossAgentWithRawActsAndRawObs(base_agent.BaseAgent):
                                    units.Neutral.VespeneGeyser,
                                ]]
 
-            distances = self.get_distances(obs, vespene_patches, (nexus.x, nexus.y))
-            ds = np.argsort(distances)
-            vespene_patch = vespene_patches[ds[2]]
+            try:
+                distances = self.get_distances(obs, vespene_patches, (nexus.x, nexus.y))
+                ds = np.argsort(distances)
+                vespene_patch = vespene_patches[ds[2]]
 
-            if self.base_top_left:
-                second_nexus_x = vespene_patch.x + 2
-                second_nexus_y = vespene_patch.y + 5
-            else:
-                second_nexus_x = vespene_patch.x - 2
-                second_nexus_y = vespene_patch.y - 5
+                if self.base_top_left:
+                    second_nexus_x = vespene_patch.x + 2
+                    second_nexus_y = vespene_patch.y + 5
+                else:
+                    second_nexus_x = vespene_patch.x - 2
+                    second_nexus_y = vespene_patch.y - 5
 
-            prove = self.choose_prove(obs)
-            if (len(completed_nexus) == 1 and obs.observation.player.minerals >= 400
-                and len(prove)>0):
-                return actions.RAW_FUNCTIONS.Build_Nexus_pt(
-                    "now", prove.tag, (second_nexus_x,second_nexus_y))
+                prove = self.choose_prove(obs)
+                if (len(completed_nexus) == 1 and obs.observation.player.minerals >= 400
+                    and len(prove)>0):
+                    return actions.RAW_FUNCTIONS.Build_Nexus_pt(
+                        "now", prove.tag, (second_nexus_x,second_nexus_y))
+            except:
+                return actions.RAW_FUNCTIONS.no_op()
         return actions.RAW_FUNCTIONS.no_op()
 
     def train_probe(self, obs):
-        nexus = self.get_my_units_by_type(
+        nexus = self.get_my_completed_units_by_type(
             obs, units.Protoss.Nexus)
         if len(nexus) > 0:
             nexus = random.choice(nexus)
@@ -343,7 +357,8 @@ class ProtossAgentWithRawActsAndRawObs(base_agent.BaseAgent):
                        obs.observation.player.food_used)
         if (len(completed_gateways) > 0 and obs.observation.player.minerals >= 100
                 and free_supply > 0):
-            gateway = random.choice(completed_gateways)
+            # gateway = random.choice(completed_gateways)
+            gateway = self.select_building(completed_gateways)
             return actions.RAW_FUNCTIONS.Train_Zealot_quick("now", gateway.tag)
         return actions.RAW_FUNCTIONS.no_op()
 
@@ -354,7 +369,8 @@ class ProtossAgentWithRawActsAndRawObs(base_agent.BaseAgent):
                        obs.observation.player.food_used)
         if (len(completed_gateways) > 0 and obs.observation.player.minerals >= 100 and
             obs.observation.player.vespene >= 50 and free_supply > 0):
-            gateway = random.choice(completed_gateways)
+            # gateway = random.choice(completed_gateways)
+            gateway = self.select_building(completed_gateways)
             return actions.RAW_FUNCTIONS.Train_Stalker_quick("now", gateway.tag)
         return actions.RAW_FUNCTIONS.no_op()
 
@@ -365,7 +381,8 @@ class ProtossAgentWithRawActsAndRawObs(base_agent.BaseAgent):
                        obs.observation.player.food_used)
         if (len(completed_gateways) > 0 and obs.observation.player.minerals >= 100 and
             obs.observation.player.vespene >= 50 and free_supply > 0):
-            gateway = random.choice(completed_gateways)
+            # gateway = random.choice(completed_gateways)
+            gateway = self.select_building(completed_gateways)
             return actions.RAW_FUNCTIONS.Train_Adept_quick("now", gateway.tag)
         return actions.RAW_FUNCTIONS.no_op()
 
@@ -380,7 +397,8 @@ class ProtossAgentWithRawActsAndRawObs(base_agent.BaseAgent):
         if (len(completed_gateways)>0 and len(completed_darkshrine) > 0
                 and obs.observation.player.minerals >= 125 and
             obs.observation.player.vespene >= 125 and free_supply >= 2):
-            gateway = random.choice(completed_gateways)
+            # gateway = random.choice(completed_gateways)
+            gateway = self.select_building(completed_gateways)
             return actions.RAW_FUNCTIONS.Train_DarkTemplar_quick("now", gateway.tag)
         return actions.RAW_FUNCTIONS.no_op()
 
@@ -392,7 +410,8 @@ class ProtossAgentWithRawActsAndRawObs(base_agent.BaseAgent):
                        obs.observation.player.food_used)
         if ( obs.observation.player.minerals >= 250 and len(completed_stargates)>0 and
             obs.observation.player.vespene >= 150 and free_supply >= 4):
-            stargate = random.choice(completed_stargates)
+            # stargate = random.choice(completed_stargates)
+            stargate = self.select_building(completed_stargates)
             return actions.RAW_FUNCTIONS.Train_VoidRay_quick("now", stargate.tag)
         return actions.RAW_FUNCTIONS.no_op()
 
@@ -406,7 +425,8 @@ class ProtossAgentWithRawActsAndRawObs(base_agent.BaseAgent):
                        obs.observation.player.food_used)
         if (len(completed_fleetbeacon) > 0 and obs.observation.player.minerals >= 300 and len(completed_stargates)>0 and
             obs.observation.player.vespene >= 200 and free_supply >= 4):
-            stargate = random.choice(completed_stargates)
+            # stargate = random.choice(completed_stargates)
+            stargate = self.select_building(completed_stargates)
             return actions.RAW_FUNCTIONS.Train_Tempest_quick("now", stargate.tag)
         return actions.RAW_FUNCTIONS.no_op()
 
@@ -417,7 +437,8 @@ class ProtossAgentWithRawActsAndRawObs(base_agent.BaseAgent):
                        obs.observation.player.food_used)
         if (len(completed_robotics) > 0 and obs.observation.player.minerals >= 250 and
             obs.observation.player.vespene >= 100 and free_supply >= 4):
-            robotics = random.choice(completed_robotics)
+            # robotics = random.choice(completed_robotics)
+            robotics = self.select_building(completed_robotics)
             return actions.RAW_FUNCTIONS.Train_Immortal_quick("now", robotics.tag)
         return actions.RAW_FUNCTIONS.no_op()
 
@@ -430,7 +451,8 @@ class ProtossAgentWithRawActsAndRawObs(base_agent.BaseAgent):
                        obs.observation.player.food_used)
         if (len(completed_roboticsbay) > 0 and obs.observation.player.minerals >= 300 and len(completed_robotics)>0 and
             obs.observation.player.vespene >= 200 and free_supply >= 6):
-            robotics = random.choice(completed_robotics)
+            # robotics = random.choice(completed_robotics)
+            robotics = self.select_building(completed_robotics)
             return actions.RAW_FUNCTIONS.Train_Colossus_quick("now", robotics.tag)
         return actions.RAW_FUNCTIONS.no_op()
 
@@ -478,11 +500,40 @@ class ProtossAgentWithRawActsAndRawObs(base_agent.BaseAgent):
         army = zealots+stalkers+adepts+darks+tempests+mothercores+motherships+voidrays+immortals+colossus
         if len(army) > 6:
             armytags = [a.tag for a in army]
+
             attack_xy = (38, 44) if self.base_top_left else (19, 23)
             distances = self.get_distances(obs, army, attack_xy)
             # armed = army[np.argmax(distances)]
-            x_offset = random.randint(-20, 20)
-            y_offset = random.randint(-20, 20)
+            x_offset = random.randint(-10, 10)
+            y_offset = random.randint(-10, 10)
+            target_x = attack_xy[0] + x_offset if (attack_xy[0] + x_offset) > 0 else 0
+            target_y = attack_xy[1] + y_offset if (attack_xy[1] + y_offset) > 0 else 0
+            if target_x >= 0 and target_y >= 0:
+                return actions.RAW_FUNCTIONS.Attack_pt(
+                    "now", armytags, (target_x, target_y))
+        return actions.RAW_FUNCTIONS.no_op()
+
+    def attack_multi(self, obs):
+        zealots = self.get_my_units_by_type(obs, units.Protoss.Zealot)
+        stalkers = self.get_my_units_by_type(obs, units.Protoss.Stalker)
+        adepts = self.get_my_units_by_type(obs, units.Protoss.Adept)
+        darks = self.get_my_units_by_type(obs, units.Protoss.DarkTemplar)
+        tempests = self.get_my_units_by_type(obs, units.Protoss.Tempest)
+        voidrays = self.get_my_units_by_type(obs, units.Protoss.VoidRay)
+        immortals = self.get_my_units_by_type(obs, units.Protoss.Immortal)
+        colossus = self.get_my_units_by_type(obs, units.Protoss.Colossus)
+        mothercores = self.get_my_units_by_type(obs, units.Protoss.MothershipCore)
+        motherships = self.get_my_units_by_type(obs, units.Protoss.Mothership)
+
+        army = zealots+stalkers+adepts+darks+tempests+mothercores+motherships+voidrays+immortals+colossus
+        if len(army) > 6:
+            armytags = [a.tag for a in army]
+
+            attack_xy = (19, 44) if self.base_top_left else (38, 23)
+            distances = self.get_distances(obs, army, attack_xy)
+            # armed = army[np.argmax(distances)]
+            x_offset = random.randint(-10, 10)
+            y_offset = random.randint(-10, 10)
             target_x = attack_xy[0] + x_offset if (attack_xy[0] + x_offset) > 0 else 0
             target_y = attack_xy[1] + y_offset if (attack_xy[1] + y_offset) > 0 else 0
             if target_x >= 0 and target_y >= 0:
@@ -500,18 +551,18 @@ class ProtossRLAgentWithRawActsAndRawObs(ProtossAgentWithRawActsAndRawObs):
     def __init__(self):
         super(ProtossRLAgentWithRawActsAndRawObs, self).__init__()
 
-        self.s_dim = 35
-        self.a_dim = 27
+        self.s_dim = 41
+        self.a_dim = 28
 
-        self.lr = 1e-4 * 1
-        self.batch_size = 32
+        self.lr = 1e-3 * 1
+        self.batch_size = 2048
         self.gamma = 0.99
         self.memory_size = 200000
         self.eps_max = 1.0
         self.eps_min = 0.01
         self.epsilon = 1.0
+        # self.init_sampling = 4000
         self.init_sampling = 4000
-        # self.init_sampling = 1000
         self.target_update_interval = 10
 
         self.data_file_qnet = 's09287_rlagent_with_vanilla_dqn_qnet'
@@ -519,13 +570,15 @@ class ProtossRLAgentWithRawActsAndRawObs(ProtossAgentWithRawActsAndRawObs):
 
         self.qnetwork = NaiveMultiLayerPerceptron(input_dim=self.s_dim,
                            output_dim=self.a_dim,
-                           num_neurons=[256],
+                           num_neurons=[128,64],
+                           # num_neurons=[128],
                            hidden_act_func='ReLU',
                            out_act_func='Identity').to(device)
 
         self.qnetwork_target = NaiveMultiLayerPerceptron(input_dim=self.s_dim,
                            output_dim=self.a_dim,
-                           num_neurons=[256],
+                           num_neurons=[128,64],
+                           # num_neurons=[128],
                            hidden_act_func='ReLU',
                            out_act_func='Identity').to(device)
 
@@ -570,6 +623,7 @@ class ProtossRLAgentWithRawActsAndRawObs(ProtossAgentWithRawActsAndRawObs):
         # epsilon scheduling
         # slowly decaying_epsilon
         self.epsilon = max(self.eps_min, self.eps_max - self.eps_min * (self.episode_count / 50))
+        # self.epsilon = max(self.eps_min, self.epsilon*0.99)
         self.dqn.epsilon = torch.tensor(self.epsilon).to(device)
 
 
@@ -596,9 +650,9 @@ class ProtossRLAgentWithRawActsAndRawObs(ProtossAgentWithRawActsAndRawObs):
 
         free_supply = (obs.observation.player.food_cap -
                        obs.observation.player.food_used)
-        can_afford_supply_depot = obs.observation.player.minerals >= 100
-        can_afford_gateways = obs.observation.player.minerals >= 150
-        can_afford_zealot = obs.observation.player.minerals >= 100
+        can_afford_mineral = obs.observation.player.minerals
+        can_afford_vespene = obs.observation.player.vespene
+        army_count = obs.observation.player.army_count
 
         enemy_scvs = self.get_enemy_units_by_type(obs, units.Terran.SCV)
         enemy_mules = self.get_enemy_units_by_type(obs, units.Terran.MULE)
@@ -619,6 +673,12 @@ class ProtossRLAgentWithRawActsAndRawObs(ProtossAgentWithRawActsAndRawObs):
         enemy_viking = self.get_enemy_units_by_type(obs, units.Terran.VikingFighter)
         enemy_medivac = self.get_enemy_units_by_type(obs, units.Terran.Medivac)
         enemy_banshee = self.get_enemy_units_by_type(obs, units.Terran.Banshee)
+        enemy_reaper = self.get_enemy_units_by_type(obs, units.Terran.Reaper)
+        enemy_raven = self.get_enemy_units_by_type(obs, units.Terran.Raven)
+        enemy_liberator = self.get_enemy_units_by_type(obs, units.Terran.Liberator)
+        enemy_hellbat = self.get_enemy_units_by_type(obs, units.Terran.Hellbat)
+        enemy_thor = self.get_enemy_units_by_type(obs, units.Terran.Thor)
+        enemy_cyclone = self.get_enemy_units_by_type(obs, units.Terran.Cyclone)
 
         return (len(nexus),
                 len(probes),
@@ -637,9 +697,9 @@ class ProtossRLAgentWithRawActsAndRawObs(ProtossAgentWithRawActsAndRawObs):
                 len(colossus),
                 len(mothercores+motherships),
                 free_supply,
-                can_afford_supply_depot,
-                can_afford_gateways,
-                can_afford_zealot,
+                can_afford_mineral,
+                can_afford_vespene,
+                army_count,
                 len(enemy_command_centers),
                 len(enemy_scvs),
                 len(enemy_idle_scvs),
@@ -654,7 +714,13 @@ class ProtossRLAgentWithRawActsAndRawObs(ProtossAgentWithRawActsAndRawObs):
                 len(enemy_tank),
                 len(enemy_viking),
                 len(enemy_medivac),
-                len(enemy_banshee)
+                len(enemy_reaper),
+                len(enemy_raven),
+                len(enemy_liberator),
+                len(enemy_hellbat),
+                len(enemy_thor),
+                len(enemy_banshee),
+                len(enemy_cyclone)
                 )
 
     def step(self, obs):
@@ -688,19 +754,23 @@ class ProtossRLAgentWithRawActsAndRawObs(ProtossAgentWithRawActsAndRawObs):
                 sampled_exps = self.memory.sample(self.batch_size)
                 sampled_exps = prepare_training_inputs(sampled_exps, device)
                 self.dqn.learn(*sampled_exps)
+                self.loss = self.dqn._get_loss_()
+                self.ratio = self.dqn._get_action_ratio()
 
-            if self.episode_count % self.target_update_interval == 0:
-                self.dqn.qnet_target.load_state_dict(self.dqn.qnet.state_dict())
+                #writer.add_scalar("Loss/train", self.loss / obs.observation.game_loop, self.episode_count)
+                #writer.add_scalar("Score", self.cum_reward, self.episode_count)
+                #writer.add_scalar("Actions", self.ratio, self.episode_count)
 
-            if self.episode_count % self.print_every == 0:
-                msg = (self.episode_count, self.cum_reward, self.epsilon)
-                print("Episode : {:4.0f} | Cumulative Reward : {:4.0f} | Epsilon : {:.3f}".format(*msg))
+                if self.episode_count % self.target_update_interval == 0:
+                    self.dqn.qnet_target.load_state_dict(self.dqn.qnet.state_dict())
+
+                if self.episode_count % self.print_every == 0:
+                    msg = (self.episode_count, self.cum_reward, self.epsilon, self.loss, self.ratio)
+                    print("Episode : {:4.0f} | Cumulative Reward : {:4.0f} | Epsilon : {:.3f}"
+                          " |  Loss : {:.3f} | Select Ratio : {:.3f}".format(*msg))
 
             torch.save(self.dqn.qnet.state_dict(), self.data_file_qnet + '.pt')
             torch.save(self.dqn.qnet_target.state_dict(), self.data_file_qnet_target + '.pt')
-
-            #writer.add_scalar("Loss/train", self.cum_loss/obs.observation.game_loop, self.episode_count)
-            #writer.add_scalar("Score", self.cum_reward, self.episode_count)
 
         return getattr(self, action)(obs)
 
@@ -795,7 +865,7 @@ def main(unused_argv):
                map_name="Simple64",
                players=[sc2_env.Agent(sc2_env.Race.protoss),
                         sc2_env.Bot(sc2_env.Race.terran,
-                                    sc2_env.Difficulty.hard)],
+                                    sc2_env.Difficulty.medium)],
                agent_interface_format=features.AgentInterfaceFormat(
                    action_space=actions.ActionSpace.RAW,
                    use_raw_units=True,
