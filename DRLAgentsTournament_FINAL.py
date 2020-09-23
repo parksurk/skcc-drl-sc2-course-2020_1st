@@ -22,22 +22,24 @@ from s10336.sc2.agent.DRLAgentWithVanillaDQN import TerranRLAgentWithRawActsAndR
 from s10071.sc2.agent.DRLAgentWithVDQN_mod_final import TerranRLAgentWithRawActsAndRawObs as Agent10071
 from s10395.sc2.agent.protoss_DRLAgentWithVanillaDQN import ProtossRLAgentWithRawActsAndRawObs as Agent10395
 from s10274.sc2.agent.DRLAgentWithDuelingDQN import TerranRLAgentWithRawActsAndRawObs as Agent10274
+from s05026.dqn_with_fixedtarget_my import TerranRLAgentWithRawActsAndRawObs as Agent05026
 
 def main(unused_argv):
    agent_baseline = TerranRLAgentWithRawActsAndRawObs()
    T_09360 = Agent09360() # sc2_env.Race.terran, "09360 조용준"
    Z_10472 = Agent10472() # sc2_env.Race.zerg, "10472 오수은"
+   T_05076 = Agent05026() # sc2_env.Race.terran, "05076 박상원"
    P_09287 = Agent09287() # sc2_env.Race.protoss, "09287 서대웅"
    T_10336 = Agent10336() # sc2_env.Race.terran, "10336 김명환"
    T_10071 = Agent10071() # sc2_env.Race.terran, "10071 오동훈"
    P_10395 = Agent10395() # sc2_env.Race.protoss, "10395 이현호"
    P_10073 = Agent10073() # sc2_env.Race.protoss, "10073 오필훈"
-   T_10274 = Agent10071() # sc2_env.Race.terran, "10274 최지은"
+   T_10274 = Agent10274() # sc2_env.Race.terran, "10274 최지은"
 
    try:
        with sc2_env.SC2Env(
                map_name="Simple64",
-               players=[sc2_env.Agent(sc2_env.Race.terran, "09360 조용준"),
+               players=[sc2_env.Agent(sc2_env.Race.terran, "05076 박상원"),
                         sc2_env.Agent(sc2_env.Race.protoss, "10073 오필훈")],
                agent_interface_format=features.AgentInterfaceFormat(
                    action_space=actions.ActionSpace.RAW,
@@ -51,8 +53,8 @@ def main(unused_argv):
                disable_fog=True,
                visualize=False
        ) as env:
-           run_loop.run_loop([T_09360, P_10073], env, max_episodes=1)
-           env.save_replay("DRLAgentsTournament_ROUND1")
+           run_loop.run_loop([T_05076, P_10073], env, max_episodes=1)
+           env.save_replay("DRLAgentsTournament_FINAL")
    except KeyboardInterrupt:
        pass
 
