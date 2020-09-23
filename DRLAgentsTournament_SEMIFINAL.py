@@ -37,26 +37,10 @@ def main(unused_argv):
    try:
        with sc2_env.SC2Env(
                map_name="Simple64",
-               # players=[sc2_env.Agent(sc2_env.Race.terran, "08967 박석"),
-               #          sc2_env.Agent(sc2_env.Race.protoss,"09287 서대웅")],
-               # players=[sc2_env.Agent(sc2_env.Race.protoss, "09287 서대웅"),
-               #          sc2_env.Agent(sc2_env.Race.protoss, "10073 오필훈")],
-               # players=[sc2_env.Agent(sc2_env.Race.terran, "09360 조용준"),
-               #          sc2_env.Agent(sc2_env.Race.protoss, "10073 오필훈")],
-               # players=[sc2_env.Agent(sc2_env.Race.protoss, "09287 서대웅"),
-               #          sc2_env.Agent(sc2_env.Race.terran, "10336 김명환")],
-               # players=[sc2_env.Agent(sc2_env.Race.terran, "10071 오동훈"),
-               #          sc2_env.Agent(sc2_env.Race.protoss, "10395 이현호")],
-               # players=[sc2_env.Agent(sc2_env.Race.protoss, "10073 오필훈"),
-               #          sc2_env.Agent(sc2_env.Race.terran, "10274 최지은")],
-
-               # players=[sc2_env.Agent(sc2_env.Race.terran, "09360 조용준"),
-               #          sc2_env.Agent(sc2_env.Race.protoss,"09287 서대웅")],
+               players=[sc2_env.Agent(sc2_env.Race.terran, "09360 조용준"),
+                        sc2_env.Agent(sc2_env.Race.protoss,"09287 서대웅")],
                # players=[sc2_env.Agent(sc2_env.Race.protoss, "10395 이현호"),
                #          sc2_env.Agent(sc2_env.Race.protoss, "10073 오필훈")],
-
-               players=[sc2_env.Agent(sc2_env.Race.terran, "09360 조용준"),
-                        sc2_env.Agent(sc2_env.Race.protoss, "10073 오필훈")],
                agent_interface_format=features.AgentInterfaceFormat(
                    action_space=actions.ActionSpace.RAW,
                    use_feature_units=True,
@@ -69,8 +53,8 @@ def main(unused_argv):
                disable_fog=True,
                visualize=False
        ) as env:
-           run_loop.run_loop([T_09360, P_10073], env, max_episodes=1)
-           env.save_replay("DRLAgentsTournamentTest03")
+           run_loop.run_loop([T_09360, P_09287], env, max_episodes=1)
+           env.save_replay("DRLAgentsTournament_ROUND1")
    except KeyboardInterrupt:
        pass
 
