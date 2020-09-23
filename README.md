@@ -1,5 +1,5 @@
 # "스타크래프트2로 배우는 강화학습 - 2020 Season 1"  Final Project Tournament 결과
-
+  
 - Course 수행 기간 : 2020.08.12 ~ 2020.09.24 (about 7 weeks)
 - Course 수행 방법 :O2O Project-based Course
 - Google Classroom : '현업에서 활용하는 나만의 StarCraft2 강화학습 Agent 만들기'
