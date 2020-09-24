@@ -16,8 +16,8 @@ from absl import app
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-from s05026.skdrl.pytorch.model.mlp import NaiveMultiLayerPerceptron
-from s05026.skdrl.common.memory.memory import ExperienceReplayMemory
+from skdrl.pytorch.model.mlp import NaiveMultiLayerPerceptron
+from skdrl.common.memory.memory import ExperienceReplayMemory
 
 # Network를 분리하였으므로, weight를 저정하는 공간도 2개로 분리
 

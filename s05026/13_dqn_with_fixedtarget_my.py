@@ -16,28 +16,25 @@ from absl import app
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-from s05026.skdrl.pytorch.model.mlp import NaiveMultiLayerPerceptron
-from s05026.skdrl.common.memory.memory import ExperienceReplayMemory
+from skdrl.pytorch.model.mlp import NaiveMultiLayerPerceptron
+from skdrl.common.memory.memory import ExperienceReplayMemory
 
 # Network를 분리하였으므로, weight를 저정하는 공간도 2개로 분리
 
-DATA_FILE_QNET = '30_rlagent_with_vanilla_dqn_qnet'
-DATA_FILE_QNET_TARGET = '30_rlagent_with_vanilla_dqn_qnet_target'
-SCORE_FILE = '30_rlagent_with_vanilla_dqn_score'
+DATA_FILE_QNET = '13_rlagent_with_vanilla_dqn_qnet'
+DATA_FILE_QNET_TARGET = '13_rlagent_with_vanilla_dqn_qnet_target'
+SCORE_FILE = '13_rlagent_with_vanilla_dqn_score'
 
-scores = []                        # list containing scores from each episode
+scores = []  # list containing scores from each episode
 scores_window = deque(maxlen=100)  # last 100 scores
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # writer = SummaryWriter('/home/jupyter/tensorboard_log')
-print(device)
-
-
-
 import torch
 import torch.nn as nn
 import numpy as np
 import random
+
 
 class DQN(nn.Module):
 
@@ -64,7 +61,7 @@ class DQN(nn.Module):
         self.action_dim = action_dim
         self.qnet = qnet
         self.lr = lr
-        self.gamma = gamma # discount future reward (미래의 보상을 조금만 반영)
+        self.gamma = gamma  # discount future reward (미래의 보상을 조금만 반영)
         self.opt = torch.optim.Adam(params=self.qnet.parameters(), lr=lr)
         self.register_buffer('epsilon', torch.ones(1) * epsilon)
 
@@ -75,9 +72,9 @@ class DQN(nn.Module):
 
     def choose_action(self, state):
         qs = self.qnet(state)
-        #prob = np.random.uniform(0.0, 1.0, 1)
-        #if torch.from_numpy(prob).float() <= self.epsilon:  # random
-        if random.random() <= self.epsilon: # random
+        # prob = np.random.uniform(0.0, 1.0, 1)
+        # if torch.from_numpy(prob).float() <= self.epsilon:  # random
+        if random.random() <= self.epsilon:  # random
             action = np.random.choice(range(self.action_dim))
         else:  # greedy
             action = qs.argmax(dim=-1)
@@ -218,20 +215,14 @@ class TerranAgentWithRawActsAndRawObs(base_agent.BaseAgent):
         if (obs.observation.player.minerals >= 100 and len(supply_depots) < 25):
             free_supply = (obs.observation.player.food_cap - obs.observation.player.food_used)
             exp_free_supply = (15 + len(supply_depots) * 8) - obs.observation.player.food_used
-            # print("exp_cap : ",exp_free_supply, "cap : ", obs.observation.player.food_cap, " used: ", obs.observation.player.food_used)
-
             if (exp_free_supply <= 20):
-#                 print("supply : ", len(supply_depots), "barrack : ", len(barrackses))
-                supply_depot_xy = (22, 26) if self.base_top_left else (35, 42)
                 ccs = self.get_my_units_by_type(obs, units.Terran.CommandCenter)
                 if len(ccs) > 0:
                     mean_x, mean_y = self.getMeanLocation(ccs)
-                    barracks_xy = (22, 21) if self.base_top_left else (35, 45)
                     if len(scvs) > 0:
                         scv = random.choice(scvs)
-                        x = random.randint(mean_x - 15, mean_x + 15)
+                        x = random.randint(mean_x - 10, mean_x + 10)
                         y = random.randint(mean_y - 10, mean_y + 10)
-                        #                     print("build_supply", (x,y))
                         return actions.RAW_FUNCTIONS.Build_SupplyDepot_pt(
                             "now", scv.tag, (x, y))
         return actions.RAW_FUNCTIONS.no_op()
@@ -241,7 +232,6 @@ class TerranAgentWithRawActsAndRawObs(base_agent.BaseAgent):
         barrackses = self.get_my_units_by_type(obs, units.Terran.Barracks)
         scvs = self.get_my_units_by_type(obs, units.Terran.SCV)
         barrack_ratio = len(supply_depots) - len(barrackses)
-        #         print("build barracks", obs.observation.player.minerals, barrack_ratio)
         if (obs.observation.player.minerals >= 150 and len(barrackses) < 15):
             if (len(supply_depots) > 0 and barrack_ratio >= 0):
                 ccs = self.get_my_units_by_type(obs, units.Terran.CommandCenter)
@@ -249,9 +239,8 @@ class TerranAgentWithRawActsAndRawObs(base_agent.BaseAgent):
                     mean_x, mean_y = self.getMeanLocation(ccs)
                     if len(scvs) > 0:
                         scv = random.choice(scvs)
-                        x = random.randint(mean_x - 15, mean_x + 15)
-                        y = random.randint(mean_y - 12, mean_y + 12)
-                        #                 print("build_barrack", )
+                        x = random.randint(mean_x - 10, mean_x + 10)
+                        y = random.randint(mean_y - 10, mean_y + 10)
                         return actions.RAW_FUNCTIONS.Build_Barracks_pt("now", scv.tag, (x, y))
         return actions.RAW_FUNCTIONS.no_op()
 
@@ -267,14 +256,9 @@ class TerranAgentWithRawActsAndRawObs(base_agent.BaseAgent):
     def attack(self, obs):
         marines = self.get_my_units_by_type(obs, units.Terran.Marine)
         if len(marines) > 0:
-
             attack_xy = (38, 44) if self.base_top_left else (19, 23)
-            distances = self.get_distances(obs, marines, attack_xy)
-            # print(distances)
-            # print(np.argmax(distances))
-            # print(marine)
-            x_offset = random.randint(-12, 12)
-            y_offset = random.randint(-7, 7)
+            x_offset = random.randint(-15, 15)
+            y_offset = random.randint(-8, 8)
             return actions.RAW_FUNCTIONS.Attack_pt(
                 "now", [unit.tag for unit in marines], (attack_xy[0] + x_offset, attack_xy[1] + y_offset))
         return actions.RAW_FUNCTIONS.no_op()
@@ -286,20 +270,21 @@ class TerranRandomAgent(TerranAgentWithRawActsAndRawObs):
         action = random.choice(self.actions)
         return getattr(self, action)(obs)
 
+
 class TerranRLAgentWithRawActsAndRawObs(TerranAgentWithRawActsAndRawObs):
     def __init__(self):
         super(TerranRLAgentWithRawActsAndRawObs, self).__init__()
 
-        self.s_dim = 12
+        self.s_dim = 15
         self.a_dim = 6
 
         self.lr = 1e-4 * 1
         self.batch_size = 32
         self.gamma = 0.99
         self.memory_size = 200000
-        self.eps_max = 0.86
-        self.eps_min = 0.03
-        self.epsilon = 0.86
+        self.eps_max = 0.5
+        self.eps_min = 0.02
+        self.epsilon = 0.5
         self.init_sampling = 4000
         self.target_update_interval = 10
 
@@ -372,14 +357,10 @@ class TerranRLAgentWithRawActsAndRawObs(TerranAgentWithRawActsAndRawObs):
         completed_barrackses = self.get_my_completed_units_by_type(
             obs, units.Terran.Barracks)
         marines = self.get_my_units_by_type(obs, units.Terran.Marine)
-
         queued_marines = (completed_barrackses[0].order_length
                           if len(completed_barrackses) > 0 else 0)
-
         free_supply = (obs.observation.player.food_cap -
                        obs.observation.player.food_used)
-        #         can_afford_supply_depot = obs.observation.player.minerals >= 100
-        #         can_afford_barracks = obs.observation.player.minerals >= 150
         can_afford_marine = obs.observation.player.minerals >= 100
         too_much_minerals = obs.observation.player.minerals >= 2000
         minerals_size = round(obs.observation.player.minerals / 10, 1)
@@ -414,10 +395,11 @@ class TerranRLAgentWithRawActsAndRawObs(TerranAgentWithRawActsAndRawObs):
         enemy_Raven = self.get_enemy_units_by_type(obs, units.Terran.Raven)
         enemy_Battlecruiser = self.get_enemy_units_by_type(obs, units.Terran.Battlecruiser)
         enemy_land_count = len(enemy_marines) + len(enemy_Marauder) + len(enemy_Reaper) + len(enemy_Hellion) + \
-                           len(enemy_Hellbat) + len(enemy_SiegeTank) + len(enemy_Cyclone) + len(enemy_WidowMine) + len(enemy_Thor)
-        enemy_air_count = len(enemy_Viking) + len(enemy_Medivac) + len(enemy_Medivac) + len(enemy_Liberator) + len(enemy_Raven) + len(enemy_Battlecruiser)
+                           len(enemy_Hellbat) + len(enemy_SiegeTank) + len(enemy_Cyclone) + len(enemy_WidowMine) + len(
+            enemy_Thor)
+        enemy_air_count = len(enemy_Viking) + len(enemy_Medivac) + len(enemy_Medivac) + len(enemy_Liberator) + len(
+            enemy_Raven) + len(enemy_Battlecruiser)
         enemy_total_count = enemy_land_count + enemy_air_count
-        enemy_center = self.get_enemy_units_by_type(obs, units.Terran.CommandCenter)
 
         killed_unit_count = obs.observation.score_cumulative.killed_value_units
         killed_building_count = obs.observation.score_cumulative.killed_value_structures
@@ -426,107 +408,26 @@ class TerranRLAgentWithRawActsAndRawObs(TerranAgentWithRawActsAndRawObs):
         idle_worker_time = obs.observation.score_cumulative.idle_worker_time
         idle_production_time = obs.observation.score_cumulative.idle_production_time
 
-#         if(enemy_total_count > 0):
-#             print(enemy_total_count)
-        #         print("barracks : ", len(barrackses), " supply : ", len(supply_depots))
-        #         print("free_supply : ", free_supply, " marines : ", len(marines))
-        #         print("supply : ", len(supply_depots), " complete : ", len(completed_supply_depots))
-
         return (
-            #                 len(idle_scvs),
-#             len(scvs),
+            len(scvs),
             len(supply_depots),
             len(barrackses),
             len(marines),
             round(obs.observation.player.minerals / 10, 0),
             round(spent_minerals / 10, 0),
-            #                 too_much_minerals,
             idle_production_time,
             killed_unit_count,
             killed_building_count,
-            len(enemy_center),
             len(enemy_scvs),
             len(enemy_supply_depots),
-#             len(enemy_barrackses),
-#             len(enemy_Factory),
-#             len(enemy_Bunker),
+            len(enemy_barrackses),
+            len(enemy_Factory),
+            len(enemy_Bunker),
             enemy_total_count
         )
 
-    #         return (
-    #                 len(scvs),
-    # #                 len(idle_scvs),
-    #                 len(supply_depots),
-    #                 len(barrackses),
-    #                 len(marines),
-    # #                 queued_marines,
-    #                 free_supply,
-    # #                 can_afford_marine,
-    # #                 too_much_minerals,
-    # #                 collected_minerals,
-    #                 spent_minerals,
-    # #                 idle_production_time,
-    #                 killed_unit_count,
-    #                 killed_building_count,
-    #                 idle_worker_time,
-    #                 idle_production_time,
-    #                 len(enemy_command_centers),
-    #                 len(enemy_scvs),
-    #                 len(enemy_supply_depots),
-    #                 len(enemy_barrackses),
-    #                 len(enemy_marines),
-    # #                 len(enemy_Marauder),
-    # #                 len(enemy_Reaper),
-    #                 len(enemy_Factory),
-    # #                 len(enemy_Hellion) + len(enemy_Hellbat),
-    # #                 len(enemy_SiegeTank),
-    # #                 len(enemy_Cyclone),
-    # #                 len(enemy_WidowMine),
-    # #                 len(enemy_Thor),
-    #                 len(enemy_Starport),
-    # #                 len(enemy_Viking),
-    # #                 len(enemy_Medivac),
-    # #                 len(enemy_Liberator),
-    # #                 len(enemy_Raven),
-    # #                 len(enemy_Battlecruiser),
-    #                 enemy_land_count,
-    #                 enemy_total_count
-    # #                 enemy_air_count,
-    #                 )
-
-    # return (
-    # len(command_centers),
-    #         len(scvs),
-    #         len(idle_scvs),
-    #         len(supply_depots),
-    #         # len(completed_supply_depots),
-    #         len(barrackses),
-    #         # len(completed_barrackses),
-    #         len(marines),
-    #         queued_marines,
-    #         free_supply,
-    #         # can_afford_supply_depot,
-    #         # can_afford_barracks,
-    #         can_afford_marine,
-    #         too_much_minerals,
-    #         minerals_size,
-    #         len(enemy_command_centers),
-    #         len(enemy_scvs),
-    #         # len(enemy_idle_scvs),
-    #         len(enemy_supply_depots),
-    #         # len(enemy_completed_supply_depots),
-    #         len(enemy_barrackses),
-    #         # len(enemy_completed_barrackses),
-    #         len(enemy_marines),
-    #         killed_unit_count,
-    #         killed_building_count
-    #         )
-
     def step(self, obs):
         super(TerranRLAgentWithRawActsAndRawObs, self).step(obs)
-
-        # time.sleep(0.5)
-
         state_org = self.get_state(obs)
 
         state = torch.tensor(state_org).float().view(1, self.s_dim).to(device)
@@ -541,27 +442,6 @@ class TerranRLAgentWithRawActsAndRawObs(TerranAgentWithRawActsAndRawObs):
                           state.to(device),
                           torch.tensor(done).view(1, 1).to(device))
             self.memory.push(experience)
-
-        # return (
-        # 0         len(command_centers),
-        # 1         len(scvs),
-        # 2         len(idle_scvs),
-        # 3         len(supply_depots),
-        # 4         len(barrackses),
-        # 5         len(marines),
-        # 6         queued_marines,
-        # 7         free_supply,
-        # 8         can_afford_marine,
-        # 9         too_much_minerals,
-        # 10         minerals_size,
-        # 11         len(enemy_command_centers),
-        # 12         len(enemy_scvs),
-        # 13        len(enemy_supply_depots),
-        # 14         len(enemy_barrackses),
-        # 15         len(enemy_marines),
-        # 16         killed_unit_count,
-        # 17         killed_building_count
-        # 18         )
 
         self.previous_state = state
         self.previous_action = action_idx
@@ -599,7 +479,6 @@ class TerranRLAgentWithRawActsAndRawObs(TerranAgentWithRawActsAndRawObs):
             scores.append([win_rate, tie_rate, lost_rate])  # save most recent score(win_rate, tie_rate, lost_rate)
             with open(self.score_file + '.txt', "wb") as fp:
                 pickle.dump(scores, fp)
-            #                 print(np.array(scores))
 
             # writer.add_scalar("Loss/train", self.cum_loss/obs.observation.game_loop, self.episode_count)
             # writer.add_scalar("Score", self.cum_reward, self.episode_count)
@@ -615,7 +494,7 @@ def main(unused_argv):
                     map_name="Simple64",
                     players=[sc2_env.Agent(sc2_env.Race.terran),
                              sc2_env.Bot(sc2_env.Race.terran,
-                                         sc2_env.Difficulty.medium)],
+                                         sc2_env.Difficulty.easy)],
                     agent_interface_format=features.AgentInterfaceFormat(
                         action_space=actions.ActionSpace.RAW,
                         use_raw_units=True,
@@ -644,7 +523,6 @@ def main(unused_argv):
 
     except KeyboardInterrupt:
         pass
-
 
 if __name__ == "__main__":
     app.run(main)
