@@ -15,7 +15,7 @@
 
 3. Tournament 대진 진행 프로젝트 Github : https://github.com/parksurk/skcc-drl-sc2-course-2020_1st
 
-4. Tournament 결과
+4. Tournament 결과 (DRL-with-SC2-2020-Season1_Final-Project-Tournament.ipynb 참고)
 - ROUND 1 승자 : 박상원(테란), 서대웅(프로토스), 이현호(프로토스), 오필훈(프로토스)
 - SEMIFINAL 승자 : 서대웅(프로토스), 오필훈(프로토스)
 - FINAL 승자 : 오필훈(프로토스)
