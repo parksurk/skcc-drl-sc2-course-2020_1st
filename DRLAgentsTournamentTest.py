@@ -28,7 +28,7 @@ def main(unused_argv):
    agent_baseline = TerranRLAgentWithRawActsAndRawObs()
    T_09360 = Agent09360() # sc2_env.Race.terran, "09360 조용준"
    Z_10472 = Agent10472() # sc2_env.Race.zerg, "10472 오수은"
-   T_05076 = Agent05026() # sc2_env.Race.terran, "05076 박상원"
+   T_05026 = Agent05026() # sc2_env.Race.terran, "05026 박상원"
    P_09287 = Agent09287() # sc2_env.Race.protoss, "09287 서대웅"
    T_10336 = Agent10336() # sc2_env.Race.terran, "10336 김명환"
    T_10071 = Agent10071() # sc2_env.Race.terran, "10071 오동훈"
@@ -43,9 +43,9 @@ def main(unused_argv):
                #          sc2_env.Agent(sc2_env.Race.protoss,"09287 서대웅")],
                # players=[sc2_env.Agent(sc2_env.Race.protoss, "09287 서대웅"),
                #          sc2_env.Agent(sc2_env.Race.protoss, "10073 오필훈")],
-           
+
                # players=[sc2_env.Agent(sc2_env.Race.terran, "09360 조용준"),
-               #          sc2_env.Agent(sc2_env.Race.terran, "05076 박상원")],
+               #          sc2_env.Agent(sc2_env.Race.terran, "05026 박상원")],
                # players=[sc2_env.Agent(sc2_env.Race.protoss, "09287 서대웅"),
                #          sc2_env.Agent(sc2_env.Race.terran, "10336 김명환")],
                # players=[sc2_env.Agent(sc2_env.Race.terran, "10071 오동훈"),
@@ -53,12 +53,12 @@ def main(unused_argv):
                # players=[sc2_env.Agent(sc2_env.Race.protoss, "10073 오필훈"),
                #          sc2_env.Agent(sc2_env.Race.terran, "10274 최지은")],
 
-               # players=[sc2_env.Agent(sc2_env.Race.terran, "05076 박상원"),
+               # players=[sc2_env.Agent(sc2_env.Race.terran, "05026 박상원"),
                #          sc2_env.Agent(sc2_env.Race.protoss,"09287 서대웅")],
                # players=[sc2_env.Agent(sc2_env.Race.protoss, "10395 이현호"),
                #          sc2_env.Agent(sc2_env.Race.protoss, "10073 오필훈")],
 
-               players=[sc2_env.Agent(sc2_env.Race.terran, "05076 박상원"),
+               players=[sc2_env.Agent(sc2_env.Race.protoss,"09287 서대웅"),
                         sc2_env.Agent(sc2_env.Race.protoss, "10073 오필훈")],
                agent_interface_format=features.AgentInterfaceFormat(
                    action_space=actions.ActionSpace.RAW,
@@ -72,7 +72,7 @@ def main(unused_argv):
                disable_fog=True,
                visualize=False
        ) as env:
-           run_loop.run_loop([T_05076, P_10073], env, max_episodes=1)
+           run_loop.run_loop([P_09287, P_10073], env, max_episodes=1)
            env.save_replay("DRLAgentsTournamentTest03")
    except KeyboardInterrupt:
        pass

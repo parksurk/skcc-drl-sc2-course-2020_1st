@@ -39,7 +39,9 @@ def main(unused_argv):
    try:
        with sc2_env.SC2Env(
                map_name="Simple64",
-               players=[sc2_env.Agent(sc2_env.Race.protoss,"09287 서대웅"),
+               # players=[sc2_env.Agent(sc2_env.Race.terran, "05026 박상원"),
+               #          sc2_env.Agent(sc2_env.Race.protoss,"09287 서대웅")],
+               players=[sc2_env.Agent(sc2_env.Race.protoss, "10395 이현호"),
                         sc2_env.Agent(sc2_env.Race.protoss, "10073 오필훈")],
                agent_interface_format=features.AgentInterfaceFormat(
                    action_space=actions.ActionSpace.RAW,
@@ -53,8 +55,8 @@ def main(unused_argv):
                disable_fog=True,
                visualize=False
        ) as env:
-           run_loop.run_loop([P_09287, P_10073], env, max_episodes=1)
-           env.save_replay("DRLAgentsTournament_FINAL")
+           run_loop.run_loop([P_10395, P_10073], env, max_episodes=1)
+           env.save_replay("DRLAgentsTournament_SEMIFINAL")
    except KeyboardInterrupt:
        pass
 
